@@ -1,16 +1,24 @@
 import ORM.ORMHelper
-from ORM.Model import User,Blog,Comment
+from ORM.Model import User, Blog, Comment, next_id
 import database.MysqlHelper
-import asyncio
+import asyncio,time,random
+
 
 async def test(loop):
-    await database.MysqlHelper.create_pool(loop = loop,user='root',password='8888',database='homePage')
+    await database.MysqlHelper.create_pool(loop = loop,user='www-data',password='www-data',database='homePage')
+    emailStr = '%s@gamil.com' % random.randint(0,1000000)
+    userID = next_id()
+    userName = 'tangF'
+    userImage = 'www.person.png'
 
-    user = User(name ='tang',email='kkkk@gmail.com', passwd = '111',image = 'wwww.iii.png',admin=False,id= '4',created_at='323113123190090')
+    user = User(name =userName,email= emailStr, passwd = '111',image = userImage,admin=False,id=userID ,created_at=time.time())
+    blog = Blog(name='新浪微博', user_id= userID , user_name= userName, user_image= userImage, id=next_id(),
+                created_at=time.time(),summary='我是一个注释',content='天气好啊')
 
     await  user.save()
+    await blog.save()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(test(loop))
-loop.run_forever()
+# loop.run_forever()
 # loop.close()
