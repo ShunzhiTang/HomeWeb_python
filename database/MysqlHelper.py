@@ -13,15 +13,15 @@ from  aiohttp import  web
 @asyncio.coroutine
 def create_pool(loop ,**kw):
     logging.info('create database connection pool ...')
-    logging.info('-----xxxxx ',kw)
+    print('-----xxxxx %s'% kw['database'])
     global  __pool
-    __pool = yield  from  aiomysql.create_pool(
+    __pool = yield from aiomysql.create_pool(
         # 数据库地址 端口  用户名 密码  数据库名 编码方式
         host = kw.get('host','localhost'),
         port = kw.get('port',3306),
         user = kw['user'],
         password = kw['password'],
-        db = kw['db'],
+        db = kw['database'],
         charset = kw.get('charset' , 'utf8'),
         autocommit = kw.get('autocommit',True),
         maxsize = kw.get('maxsize',10),
