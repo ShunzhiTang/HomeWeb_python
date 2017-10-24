@@ -13,7 +13,6 @@ from  aiohttp import  web
 @asyncio.coroutine
 def create_pool(loop ,**kw):
     logging.info('create database connection pool ...')
-    print('-----xxxxx %s'% kw['database'])
     global  __pool
     __pool = yield from aiomysql.create_pool(
         # 数据库地址 端口  用户名 密码  数据库名 编码方式
@@ -34,17 +33,15 @@ def create_pool(loop ,**kw):
 import  syslog
 # size  获取多少条数据 如果传入size参数，就通过fetchmany()获取最多指定数量的记录，否则，通过fetchall()获取所有记录。
 @asyncio.coroutine
-def select(sql,args,size = None):
-    logging.info(sql, args)
+async def select(sql,args,size = None):
     global __pool
-    with (yield from  __pool) as  conn:
-        cur = yield  from conn.cursor(aiomysql.DictCursor)
-        yield from cur.execute(sql.replace('?', '%s'),args or ())
+    async with __pool.get() as  conn:
+        async  with conn.cursor(aiomysql.DictCursor) as  cur:
+            await  cur.execute(sql.replace('?', '%s'),args or ())
         if size:
-            rs = yield  from cur.fetchmany(size)
+            rs = await cur.fetchmany(size)
         else:
-            rs = yield  from cur.fetchall()
-        yield  from cur.close()
+            rs = await cur.fetchall()
         logging.info('Rows returned : %s' % len(rs))
         return rs
 
@@ -52,14 +49,18 @@ def select(sql,args,size = None):
 # insert  update  delete  需要的参数一样，所以使用execute函数实现
 
 @asyncio.coroutine
-def execute(sql ,args):
-    logging.info(sql,args)
-    with (yield from __pool) as conn:
+async def execute(sql ,args,autocommit=True):
+    async with __pool.get() as conn:
+        if not autocommit:
+            await conn.begin()
         try:
-            cur = yield  from conn.cursor()
-            yield  from cur.execute(sql.replace('?' ,'%s'),args)
-            affected = cur.rowcount
-            yield  from  cur.close()
+             async with conn.cursor(aiomysql.DictCursor) as  cur:
+                 await cur.execute(sql.replace('?' ,'%s'),args)
+                 affected = cur.rowcount
+             if not autocommit:
+                await  conn.commit()
         except BaseException as e:
-            raise
+             if not autocommit:
+                 await conn.rollback()
+             raise
         return  affected
