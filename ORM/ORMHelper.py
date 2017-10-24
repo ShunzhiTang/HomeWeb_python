@@ -15,11 +15,11 @@ def create_args_string(num):
     return ', '.join(L)
 
 class Field(object):
-    def __init__(self ,name , column_type,primary_key,defalut):
+    def __init__(self ,name , column_type,primary_key,default):
         self.name = name
         self.column_type = column_type
         self.primary_key = primary_key
-        self.defalut  = defalut
+        self.default = default
 
     def __str__(self):
         return  '<%s, %s:%s>' % (self.__class__.__name__, self.column_type, self.name)
@@ -65,7 +65,7 @@ class ModelMetaclass(type):
         return  type.__new__(cls,name,bases,attrs)
 
 
-class Model(dict,metaclass=ModelMetaclass):
+class Model(dict, metaclass=ModelMetaclass):
     def __init__(self , **kw):
         super(Model,self).__init__(**kw)
 
@@ -73,13 +73,13 @@ class Model(dict,metaclass=ModelMetaclass):
         try:
             return  self[key]
         except KeyError:
-            raise ArithmeticError(r"'Model' object has no attribute %s" ,key )
+            raise ArithmeticError(r"'Model' object has no attribute %s" ,key)
 
     def __setattr__(self, key, value):
         self[key] = value
 
     def getValue(self,key):
-        return  getattr(self,key,None)
+        return getattr(self,key,None)
 
     def getValueOrDefault(self,key):
         value = getattr(self,key,None)
@@ -140,13 +140,14 @@ class Model(dict,metaclass=ModelMetaclass):
             return None
         return rs[0]['_num_']
     async def  save(self):
-        print('====')
         args = list(map(self.getValueOrDefault,self.__fields__))
         args.append(self.getValueOrDefault(self.__primary_key__))
         rows = await database.MysqlHelper.execute(self.__insert__,args)
 
         if rows != 1:
-            logging.warn('failed to insert record : affected rows %s' % rows)
+            logging.warn('failed to insert record : affected rows')
+        else:
+            logging.info('insert successed')
 
     async def update(self):
         #获取除主键外的属性名
@@ -154,14 +155,14 @@ class Model(dict,metaclass=ModelMetaclass):
         args.append(self.getValueOrDefault(self.__primary_key__))
         rows = await database.MysqlHelper.execute(self.__update__,args)
         if rows != 1:
-            logging.warn('failed to update record : affected rows %s' % rows)
+            logging.warn('failed to update record : affected rows')
 
     async def  remove(self):
         # 获取主键
         args = [self.getValue(self.__primary_key__)]
         rows = await database.MysqlHelper.execute(self.__delete__,args)
         if rows != 1:
-            logging.warn('failed to delete record : affected rows %s' % rows)
+            logging.warn('failed to delete record : affected rows')
 
 # 映射 varchar 的 StringField
 
