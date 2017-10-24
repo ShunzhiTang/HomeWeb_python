@@ -28,6 +28,7 @@ create table blogs(
   `id` varchar(50) not null,
   `user_id` varchar(50) not null,
   `user_name` varchar(50) not null,
+  `user_image` varchar(50) not null,
   `name` varchar(50) not null,
   `summary` varchar(50) not null,
   `content` varchar(50) not null,
