@@ -1,7 +1,7 @@
-from iterable.error import APIError
 
 __author__  = 'Michael Tang'
-import  asyncio,os,functools,inspect,logging;logging.basicConfig(logging.INFO)
+import  asyncio,os,functools,inspect
+import logging;logging.basicConfig(level=logging.INFO)
 from  aiohttp import web
 from urllib import parse
 
@@ -148,11 +148,12 @@ class RequestHandler(object):
                 if not name in kw:
                     return web.HTTPBadRequest('Missing argument: %s' % name)
         logging.info('call with args : %s' % str(kw))
+
         try:
             r = await self._func(**kw)
             return r
-        except APIError as e:
-            return dict(error=e.error, data=e.data, message=e.message)
+        except KeyError:
+            raise ArithmeticError('r is error ')
 
 def add_static(app):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'static')
